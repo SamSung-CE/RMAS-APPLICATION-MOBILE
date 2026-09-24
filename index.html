@@ -5,6 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>RMAS POSM Inventory Dashboard</title>
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+/* Phone showing the page like a desktop site (Chrome "Desktop site" setting,
+   some Samsung/Xiaomi browsers, or an app installed while that was on):
+   the browser lays the page out ~980px wide and shrinks it, so everything
+   looks tiny. Detect that on touch phones and scale the app back up so it
+   is laid out at the phone's real width. */
+(function(){
+  function fit(){
+    var de = document.documentElement;
+    var touch = (navigator.maxTouchPoints || 0) > 0 && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var sw = screen.width, sh = screen.height;
+    var landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+    var devW = landscape ? Math.max(sw, sh) : Math.min(sw, sh);
+    var z = 1;
+    if (touch && Math.min(sw, sh) <= 900 && devW > 0 && window.innerWidth > devW * 1.2) z = window.innerWidth / devW;
+    // Second signal, for browsers that also fake screen.width: the page was
+    // shrunk to fit (visual scale well below 1) on a touch device.
+    var vv = window.visualViewport;
+    if (touch && vv && vv.scale > 0 && vv.scale < 0.8 && window.innerWidth > 700) z = Math.max(z, 1 / vv.scale);
+    z = Math.round(z * 1000) / 1000;
+    de.style.zoom = z > 1 ? String(z) : '';
+    window.__appZoom = z;
+    if (z > 1) de.classList.add('desktop-site-fix'); else de.classList.remove('desktop-site-fix');
+  }
+  fit();
+  window.addEventListener('load', function(){ var before = window.__appZoom; fit(); if (window.__appZoom !== before && window.applyMobileMode) window.applyMobileMode(); });
+  window.addEventListener('resize', function(){ clearTimeout(window.__fitT); window.__fitT = setTimeout(function(){ fit(); if (window.applyMobileMode) window.applyMobileMode(); }, 150); });
+})();
+</script>
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#171B24" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
@@ -422,6 +451,7 @@ body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))
       <button class="btn primary" id="loginAdminBtn" style="width:100%;justify-content:center;">Log in as Admin</button>
     </div>
     <div id="loginError" class="login-error" style="display:none;"></div>
+    <div class="cell-sub" style="text-align:center;margin-top:14px;">App version 3</div>
     <div class="install-banner" id="installBanner"><img src="icon-192.png" alt=""><div class="ib-text"><b>I-install ang app</b>Ilagay sa home screen para parang totoong app.</div><button id="installBannerBtn">Install</button></div>
   </div>
 </div>
@@ -438,6 +468,8 @@ body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))
       <button class="mini-btn" id="exportDataBtn">Export raw data (JSON)</button>
       <button class="mini-btn" id="installAppBtn" style="display:none;background:var(--primary);color:#fff;border-color:transparent;font-weight:700;">📲 Install App on this phone</button>
       <button class="mini-btn" id="logoutBtn" style="color:var(--danger);">Log out</button>
+      <div id="appVersionInfo" style="font-size:10.5px;color:var(--ink-faint);text-align:center;margin-top:8px;"></div>
+      <div class="cell-sub" id="appVersionLabel" style="text-align:center;margin-top:6px;">App version 3</div>
     </div>
   </aside>
   <div class="main">
@@ -737,7 +769,13 @@ async function postAction(action, payload){
     redirect: 'follow'
   });
   const json = await res.json();
-  if(!json.success) throw new Error(json.error || 'Unknown server error');
+  if(!json.success){
+    const msg = json.error || 'Unknown server error';
+    if(/Hindi maaaring isumite ang aksyon|Unknown POST action/i.test(msg)){
+      throw new Error('Luma pa ang Code.gs sa Google Apps Script kaya hindi pa nito kilala ang bagong feature ("'+((msg.split(':').pop()||'').trim())+'").\n\nAyusin: buksan ang Apps Script › palitan ng bagong Code.gs › Save › Deploy › Manage deployments › Edit (lapis) › Version: New version › Deploy. Pagkatapos, subukan ulit.');
+    }
+    throw new Error(msg);
+  }
   return json;
 }
 
@@ -3704,8 +3742,9 @@ function isStandalone(){ return window.matchMedia('(display-mode: standalone)').
 function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
 function isMobileDevice(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 820); }
 
+window.applyMobileMode = applyMobileMode;
 function applyMobileMode(){
-  const on = MOBILE_MQ.matches || isStandalone();
+  const on = MOBILE_MQ.matches || isStandalone() || (window.__appZoom||1) > 1;
   document.body.classList.toggle('mobile-app', on);
   document.documentElement.classList.toggle('mobile-app-root', on);
   document.body.classList.toggle('standalone', isStandalone());
@@ -3884,7 +3923,13 @@ function showUpdateBar(){
   document.body.appendChild(bar);
 }
 
+const APP_VERSION = '2026.09.24-v3';
+function updateVersionInfo(){
+  const el = document.getElementById('appVersionInfo'); if(!el) return;
+  el.textContent = `Version ${APP_VERSION} · ${isStandalone()?'installed app':'browser'} · ${window.innerWidth}px${(window.__appZoom||1)>1?' · zoom '+window.__appZoom:''}`;
+}
 function initMobileShell(){
+  updateVersionInfo(); window.addEventListener('resize', updateVersionInfo);
   applyMobileMode();
   if(MOBILE_MQ.addEventListener) MOBILE_MQ.addEventListener('change', applyMobileMode); else MOBILE_MQ.addListener(applyMobileMode);
   document.getElementById('sheetBackdrop').addEventListener('click', closeSheets);
@@ -3902,7 +3947,7 @@ function initMobileShell(){
   registerServiceWorker();
   const mo = new MutationObserver(queueMobileizeTables);
   ['content','modalRoot'].forEach(id=>mo.observe(document.getElementById(id), {childList:true, subtree:true}));
-  if(isStandalone() || MOBILE_MQ.matches) initBackHandling();
+  if(isStandalone() || MOBILE_MQ.matches || (window.__appZoom||1) > 1) initBackHandling();
 }
 if(location.hash==='#scan') currentSection='scan';
 initMobileShell();

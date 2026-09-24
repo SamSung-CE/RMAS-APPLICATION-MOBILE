@@ -2,7 +2,7 @@
    Makes the app installable, load fast, and open even with weak signal.
    Live data (Google Apps Script) is NEVER cached — it always comes fresh.
    When you upload a new version, change VERSION below so phones update. */
-const VERSION = 'rmas-posm-v2';
+const VERSION = 'rmas-posm-v3';
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./rmas-logo.webp", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./posm-org.js", "./posm-data-1.js", "./posm-data-2.js", "./posm-data-3.js", "./posm-data-4.js", "./posm-data-5.js", "./posm-data-6.js"];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -27,9 +27,10 @@ self.addEventListener('fetch', event => {
   if (url.hostname.endsWith('google.com') || url.hostname.endsWith('googleusercontent.com') ||
       url.hostname.includes('tile.openstreetmap.org') || url.hostname.includes('arcgisonline.com')) return;
 
-  // The page itself: try network first (so updates show), fall back to cache offline.
+  // The page itself: always fetch the newest copy (bypassing the browser cache) so
+  // updates show right away; fall back to the saved copy when offline.
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).then(res => {
+    event.respondWith(fetch(req.url, {cache: 'no-store', credentials: 'same-origin'}).then(res => {
       const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); return res;
     }).catch(() => caches.match('./index.html')));
     return;
