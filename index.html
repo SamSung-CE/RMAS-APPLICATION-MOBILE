@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>RMAS POSM Inventory Dashboard</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
@@ -339,8 +339,8 @@ body.mobile-app .login-card .brand-mark{width:230px;}
 .update-bar{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom, 0px));z-index:60;background:var(--ink);color:var(--surface);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.3);}
 .update-bar button{margin-left:auto;border:none;background:var(--primary);color:#fff;border-radius:9px;padding:7px 12px;font-weight:700;}
 @media(min-width:769px){ .update-bar{left:auto;right:20px;bottom:20px;max-width:360px;} }
-html:has(body.mobile-app){overflow-x:hidden;}
-body.mobile-app{overflow-x:hidden;max-width:100vw;}
+html.mobile-app-root{overflow-x:clip;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body.mobile-app{overflow-x:clip;max-width:100vw;font-size:15px;}
 body.mobile-app .main, body.mobile-app #content{min-width:0;max-width:100vw;}
 body.mobile-app .section-row, body.mobile-app .section-row > *, body.mobile-app .panel, body.mobile-app .kpi-grid > *{min-width:0;max-width:100%;}
 body.mobile-app .table-wrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;}
@@ -350,6 +350,44 @@ body.mobile-app .inv-card{border-radius:16px;}
 body.mobile-app .filters{flex-wrap:wrap;}
 body.mobile-app .filters input:not([type="checkbox"]):not([type="radio"]){flex:1 1 100%;min-width:0;font-size:16px;padding:10px 12px;border-radius:12px;}
 body.mobile-app .filters select{flex:1 1 auto;min-width:0;font-size:15px;}
+/* phone layout rules that must hold even if the browser reports a wide viewport */
+body.mobile-app .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px;}
+body.mobile-app .kpi-value{font-size:24px;} body.mobile-app .kpi-card{padding:14px;}
+body.mobile-app .kpi-label{font-size:12.5px;}
+body.mobile-app .cols-2, body.mobile-app .cols-3, body.mobile-app .kanban{grid-template-columns:1fr !important;}
+body.mobile-app .two-col{grid-template-columns:1fr !important;}
+body.mobile-app .modal-backdrop{padding:0;align-items:flex-end;}
+body.mobile-app .modal{max-width:100% !important;width:100%;border-radius:22px 22px 0 0;max-height:92vh;padding-bottom:env(safe-area-inset-bottom, 0px);}
+body.mobile-app .modal-body{padding:16px;} body.mobile-app .modal-head{padding:14px 16px;} body.mobile-app .modal-head h3{font-size:17px;}
+body.mobile-app .modal-foot{flex-wrap:wrap;} body.mobile-app .modal-foot .btn{flex:1 1 auto;justify-content:center;}
+body.mobile-app .field input, body.mobile-app .field select, body.mobile-app .field textarea, body.mobile-app .status-select, body.mobile-app select, body.mobile-app input[type="text"], body.mobile-app input[type="number"], body.mobile-app input[type="password"], body.mobile-app input[type="date"]{font-size:16px;}
+body.mobile-app .field input, body.mobile-app .field select, body.mobile-app .field textarea{padding:11px 12px;border-radius:12px;}
+body.mobile-app .field label{font-size:13px;}
+body.mobile-app .panel{padding:16px;} body.mobile-app .panel-head{flex-wrap:wrap;gap:10px;}
+body.mobile-app .panel-head h3{font-size:16.5px;} body.mobile-app .panel-sub{font-size:12.5px;}
+body.mobile-app .cell-main{font-size:14.5px;} body.mobile-app .cell-sub{font-size:12.5px;}
+body.mobile-app .notice{font-size:13px;}
+body.mobile-app .badge{font-size:11.5px;padding:3px 9px;}
+body.mobile-app .seg button{font-size:13.5px;padding:8px 12px;}
+body.mobile-app .seg{max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;} body.mobile-app .seg::-webkit-scrollbar{display:none;} body.mobile-app .seg button{flex-shrink:0;white-space:nowrap;}
+body.mobile-app .btn{font-size:14px;}
+body.mobile-app .notif-panel{right:8px;left:8px;width:auto;max-width:none;top:calc(64px + env(safe-area-inset-top, 0px));}
+body.mobile-app .chart-wrap{height:220px;}
+/* tables become stacked cards on the phone */
+body.mobile-app .table-wrap{overflow:visible;border:none;max-height:none !important;}
+body.mobile-app table.m-cards, body.mobile-app table.m-cards tbody{display:block;width:100%;}
+body.mobile-app table.m-cards thead{display:none;}
+body.mobile-app table.m-cards tr{display:block;background:var(--surface-alt);border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin-bottom:10px;}
+body.mobile-app table.m-cards td{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:6px 0;border:none !important;text-align:right;font-size:14px;min-width:0;width:auto !important;overflow-wrap:anywhere;white-space:normal !important;}
+body.mobile-app table.m-cards td + td{border-top:1px dashed var(--line) !important;}
+body.mobile-app table.m-cards td::before{content:attr(data-label);color:var(--ink-faint);font-weight:600;font-size:12px;text-align:left;flex-shrink:0;max-width:40%;padding-top:2px;}
+body.mobile-app table.m-cards td:not([data-label])::before{display:none;}
+body.mobile-app table.m-cards td:not([data-label]){justify-content:flex-end;}
+body.mobile-app table.m-cards td.empty-state{justify-content:center;text-align:center;}
+body.mobile-app table.m-cards td > div, body.mobile-app table.m-cards td > span{min-width:0;}
+body.mobile-app table.m-cards tr:has(td.empty-state){background:none;border:none;}
+body.mobile-app.modal-open{overflow:hidden;}
+.back-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:22px;font-size:13px;font-weight:600;z-index:90;}
 body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px));}
 #printArea{display:none;}
 .lbl-sheet{display:flex;flex-wrap:wrap;gap:0;}
@@ -1377,8 +1415,9 @@ function openModal(title, bodyHtml, footHtml, wide){
       <div class="modal-body">${bodyHtml}</div><div class="modal-foot">${footHtml}</div></div></div>`;
   document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
   document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+  document.body.classList.add('modal-open');
 }
-function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; document.body.classList.remove('modal-open'); }
 function posmOptions(selected){
   return DATA.posmMaster.map(p=>`<option value="${p.code}" ${p.code===selected?'selected':''}>${p.code} — ${p.desc}</option>`).join('');
 }
@@ -2707,15 +2746,30 @@ function baseChartOpts(c, opts={}){
 }
 
 /* ============================= MASTER RENDER ============================= */
+let lastRenderedSection = null;
 function renderAll(){
   if(!DATA) return;
   renderNav(); renderWarehouseFilter(); updateNotifBadge();
   if(!visibleSections().some(s=>s.key===currentSection)) currentSection = 'dashboard';
+  const sameSection = lastRenderedSection === currentSection;
+  const keepY = sameSection ? window.scrollY : 0;
+  if(!sameSection && lastRenderedSection && !navFromBack){ navStack.push(lastRenderedSection); if(navStack.length > 30) navStack.shift(); }
+  navFromBack = false;
+  lastRenderedSection = currentSection;
+  try{ renderSection(!sameSection); } finally {
+    if(!sameSection) window.scrollTo(0, 0);
+    // Auto-refresh re-renders the page every 45s — keep the user where they were.
+    if(sameSection && keepY) window.scrollTo(0, keepY);
+    mobileizeTables();
+  }
+}
+function renderSection(sectionChanged){
   if(currentSection!=='scan' && (scannerRunning || scanner)) stopScanner();
   const section = SECTIONS.find(s=>s.key===currentSection);
   document.getElementById('pageTitle').textContent = section.label;
   document.getElementById('pageSub').textContent = section.sub;
-  closeSheets(); renderTabbar();
+  if(sectionChanged) closeSheets();
+  renderTabbar();
   if(currentSection==='dashboard') renderDashboard();
   else if(currentSection==='inventory') renderInventory();
   else if(currentSection==='stockflow') renderStockflow();
@@ -3653,6 +3707,7 @@ function isMobileDevice(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(naviga
 function applyMobileMode(){
   const on = MOBILE_MQ.matches || isStandalone();
   document.body.classList.toggle('mobile-app', on);
+  document.documentElement.classList.toggle('mobile-app-root', on);
   document.body.classList.toggle('standalone', isStandalone());
   const sheetBody = document.getElementById('filterSheetBody');
   const filters = document.getElementById('filterGroup');
@@ -3669,7 +3724,64 @@ function applyMobileMode(){
     closeSheets();
   }
   updateFilterDot();
+  mobileizeTables();
 }
+
+/* Phone tables → stacked cards: each cell gets its column name as a label,
+   so wide tables (history, approvals, logs) never force sideways scrolling
+   or make the browser zoom the whole app out. */
+function mobileizeTables(){
+  if(!document.body.classList.contains('mobile-app')) return;
+  document.querySelectorAll('#content table, #modalRoot table').forEach(t=>{
+    if(t.closest('.no-mcard')) return;
+    const heads = [...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+    if(!heads.length) return;
+    t.classList.add('m-cards');
+    t.querySelectorAll('tbody tr:not([data-mc])').forEach(tr=>{
+      tr.setAttribute('data-mc','1');
+      let col = 0;
+      [...tr.children].forEach(td=>{
+        const label = heads[col];
+        if(label && !td.classList.contains('empty-state') && !td.hasAttribute('data-label')) td.setAttribute('data-label', label);
+        col += Number(td.getAttribute('colspan')||1);
+      });
+    });
+  });
+}
+let mcQueued = false;
+function queueMobileizeTables(){ if(mcQueued) return; mcQueued = true; requestAnimationFrame(()=>{ mcQueued = false; mobileizeTables(); }); }
+
+/* Android back button / back gesture inside the installed app:
+   closes a popup or sheet first, then goes to the previous page, and only
+   leaves the app after a second press on Home (instead of suddenly exiting). */
+const navStack = [];
+let navFromBack = false, backExitArmed = 0;
+function sheetIsOpen(){ return document.getElementById('sidebar').classList.contains('open') || document.getElementById('filterSheet').classList.contains('open'); }
+function initBackHandling(){
+  try{
+    history.replaceState({rmasBase:true}, '');
+    history.pushState({rmasTrap:true}, '');
+  }catch(e){ return; }
+  window.addEventListener('popstate', ()=>{
+    const reTrap = ()=>{ try{ history.pushState({rmasTrap:true}, ''); }catch(e){} };
+    if(document.getElementById('modalBackdrop')){ closeModal(); reTrap(); return; }
+    const lb = document.querySelector('.lightbox, #lightbox, .receipt-lightbox');
+    if(lb && lb.offsetParent !== null){ lb.remove(); reTrap(); return; }
+    if(sheetIsOpen()){ closeSheets(); reTrap(); return; }
+    const np = document.getElementById('notifPanel');
+    if(np && np.style.display !== 'none'){ np.style.display = 'none'; reTrap(); return; }
+    if(document.getElementById('app').style.display !== 'none' && DATA){
+      if(navStack.length){ navFromBack = true; currentSection = navStack.pop(); renderAll(); reTrap(); return; }
+      if(currentSection !== 'dashboard'){ navFromBack = true; currentSection = 'dashboard'; renderAll(); reTrap(); return; }
+    }
+    if(Date.now() - backExitArmed < 2200){ history.back(); return; }
+    backExitArmed = Date.now();
+    const t = document.createElement('div'); t.className = 'back-toast'; t.textContent = 'Pindutin ulit ang Back para lumabas';
+    document.body.appendChild(t); setTimeout(()=>t.remove(), 2000);
+    reTrap();
+  });
+}
+
 function closeSheets(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('filterSheet').classList.remove('open');
@@ -3718,7 +3830,8 @@ function renderTabbar(){
     try{ if(navigator.vibrate) navigator.vibrate(8); }catch(e){}
     if(k==='__more'){ openSheet('sidebar'); return; }
     if(currentSection===k){ window.scrollTo({top:0, behavior:'smooth'}); return; }
-    currentSection = k; renderAll(); window.scrollTo(0,0);
+    if(k==='dashboard') navStack.length = 0;
+    currentSection = k; renderAll(); if(k==='dashboard') navStack.length = 0;
   }));
 }
 
@@ -3787,6 +3900,9 @@ function initMobileShell(){
   sb.addEventListener('touchmove', e=>{ if(y0!==null && e.touches[0].clientY - y0 > 90){ y0 = null; closeSheets(); } }, {passive:true});
   updateInstallUI();
   registerServiceWorker();
+  const mo = new MutationObserver(queueMobileizeTables);
+  ['content','modalRoot'].forEach(id=>mo.observe(document.getElementById(id), {childList:true, subtree:true}));
+  if(isStandalone() || MOBILE_MQ.matches) initBackHandling();
 }
 if(location.hash==='#scan') currentSection='scan';
 initMobileShell();
