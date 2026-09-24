@@ -26,6 +26,8 @@
     if (touch && vv && vv.scale > 0 && vv.scale < 0.8 && window.innerWidth > 700) z = Math.max(z, 1 / vv.scale);
     z = Math.round(z * 1000) / 1000;
     de.style.zoom = z > 1 ? String(z) : '';
+    // 1% of the real screen height, in the app's own (zoomed) CSS pixels.
+    de.style.setProperty('--vh', ((window.innerHeight / (z > 1 ? z : 1)) / 100).toFixed(3) + 'px');
     window.__appZoom = z;
     if (z > 1) de.classList.add('desktop-site-fix'); else de.classList.remove('desktop-site-fix');
   }
@@ -48,7 +50,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{
+:root{--vh:1vh;
   --bg:#F1F3F7; --surface:#FFFFFF; --surface-alt:#F7F8FB; --ink:#161A24; --ink-soft:#5B6272; --ink-faint:#9199AA;
   --line:#E3E6ED; --primary:#15239E; --primary-ink:#0D1970; --primary-tint:#EAEDFB; --accent:#0A87C4;
   --success:#1B8A5A; --success-bg:#E5F5EC; --warning:#B4780F; --warning-bg:#FBF0DA; --danger:#C43B3B; --danger-bg:#FBEAEA;
@@ -395,7 +397,7 @@ body.mobile-app .field label{font-size:13px;}
 body.mobile-app .panel{padding:16px;} body.mobile-app .panel-head{flex-wrap:wrap;gap:10px;}
 body.mobile-app .panel-head h3{font-size:16.5px;} body.mobile-app .panel-sub{font-size:12.5px;}
 body.mobile-app .cell-main{font-size:14.5px;} body.mobile-app .cell-sub{font-size:12.5px;}
-body.mobile-app .notice{font-size:13px;}
+body.mobile-app .notice{font-size:13px;flex-wrap:wrap;} body.mobile-app .notice > div{min-width:0;flex:1 1 220px;} body.mobile-app .notice .btn{flex:1 1 100%;justify-content:center;}
 body.mobile-app .badge{font-size:11.5px;padding:3px 9px;}
 body.mobile-app .seg button{font-size:13.5px;padding:8px 12px;}
 body.mobile-app .seg{max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;} body.mobile-app .seg::-webkit-scrollbar{display:none;} body.mobile-app .seg button{flex-shrink:0;white-space:nowrap;}
@@ -416,6 +418,22 @@ body.mobile-app table.m-cards td.empty-state{justify-content:center;text-align:c
 body.mobile-app table.m-cards td > div, body.mobile-app table.m-cards td > span{min-width:0;}
 body.mobile-app table.m-cards tr:has(td.empty-state){background:none;border:none;}
 body.mobile-app.modal-open{overflow:hidden;}
+body.mobile-app table.act-table{width:100%;table-layout:fixed;}
+body.mobile-app table.act-table td:nth-child(1){width:40px !important;padding-right:4px;}
+body.mobile-app table.act-table td:nth-child(3){width:56px;font-size:11.5px;}
+body.mobile-app table.act-table td:nth-child(2){min-width:0;}
+body.mobile-app table.act-table td:nth-child(2) .cell-main{font-size:14px;overflow-wrap:anywhere;}
+body.mobile-app table.act-table td:nth-child(2) .cell-sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+body.mobile-app td, body.mobile-app .cell-main, body.mobile-app .cell-sub{overflow-wrap:anywhere;}
+body.mobile-app .panel-head > div:first-child{min-width:0;flex:1 1 200px;}
+body.mobile-app .panel-head > div:not(:first-child){max-width:100%;min-width:0;}
+/* use the zoom-aware viewport unit so sheets and popups never run past the screen */
+body.mobile-app #app{min-height:calc(var(--vh) * 100);}
+body.mobile-app .login-screen{min-height:calc(var(--vh) * 100);}
+body.mobile-app .sidebar, body.mobile-app .sheet{max-height:calc(var(--vh) * 86);}
+body.mobile-app .modal{max-height:calc(var(--vh) * 90);}
+body.mobile-app .notif-panel{max-height:calc(var(--vh) * 70);}
+body.mobile-app .lbl-list{max-height:calc(var(--vh) * 48);}
 .back-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:22px;font-size:13px;font-weight:600;z-index:90;}
 body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px));}
 #printArea{display:none;}
@@ -1258,11 +1276,12 @@ function renderActivityFeed(){
   if(!root) return;
   const all = buildActivityFeed();
   const filtered = dashboardActivityFilter==='all' ? all : all.filter(i=>i.cat===dashboardActivityFilter);
-  const CAP = 150;
+  const mobile = document.body.classList.contains('mobile-app');
+  const CAP = mobile ? (window.__actShow || 25) : 150;
   const shown = filtered.slice(0, CAP);
   root.innerHTML = `
-    ${filtered.length > CAP ? `<div class="result-note">Showing the latest ${CAP} of ${filtered.length} — use "Download Analytics Report (Excel)" for the complete history.</div>` : ''}
-    <div class="table-wrap scroll-y"><table>
+    ${filtered.length > CAP && !mobile ? `<div class="result-note">Showing the latest ${CAP} of ${filtered.length} — use "Download Analytics Report (Excel)" for the complete history.</div>` : ''}
+    <div class="table-wrap scroll-y"><table class="act-table">
       <tbody>
       ${shown.map(i=>`<tr>
         <td style="width:38px;"><div class="tile" style="background:var(--${i.color});width:28px;height:28px;">${icon(i.icon,14)}</div></td>
@@ -1271,7 +1290,10 @@ function renderActivityFeed(){
       </tr>`).join('') || `<tr><td colspan="3" class="empty-state">No activity yet.</td></tr>`}
       </tbody>
     </table></div>
+    ${mobile && filtered.length > CAP ? `<button class="btn" id="actShowMore" style="width:100%;justify-content:center;margin-top:10px;">Show more (${filtered.length - CAP} more)</button>` : ''}
   `;
+  const more = document.getElementById('actShowMore');
+  if(more) more.addEventListener('click', ()=>{ window.__actShow = CAP + 25; renderActivityFeed(); });
 }
 function getOverdueRequests(){
   return DATA.requests.filter(r=> r.status==='for_delivery' && r.dueDate && new Date(r.dueDate) < new Date());
@@ -1329,7 +1351,7 @@ function renderNav(){
   const disposeCount = DATA.posmMaster.filter(p=>p.status==='expired'||p.status==='obsolete').length;
   const pendingApprovalCount = (DATA.pendingActions||[]).filter(p=>p.status==='pending').length;
   const mySubsOpenCount = (DATA.pendingActions||[]).filter(p=>p.status==='pending' && session && p.submittedBy===session.name).length;
-  const rejectedCount = DATA.requests.filter(r=>r.status==='rejected').length + DATA.transfers.filter(t=>t.status==='rejected').length;
+  const rejectedCount = DATA.requests.filter(r=>r.status==='rejected').length + DATA.transfers.filter(t=>t.status==='rejected').length + rejectedSubmissions().length;
   let lastGroup = null;
   nav.innerHTML = visibleSections().map(s=>{
     let badge = '';
@@ -2188,14 +2210,45 @@ function findRejectInfo(action, recordId){
   });
   return item ? {reason: item.rejectReason||'', reviewedBy: item.reviewedBy||'', reviewedAt: item.reviewedAt||''} : null;
 }
+// Rejected Pending Approvals that aren't already represented as a rejected
+// Request/Transfer row (those two have their own tables above).
+function rejectedSubmissions(){
+  const isAdmin = !USE_DB || (session && session.role==='admin');
+  const whFilter = currentFilterWarehouse();
+  return (DATA.pendingActions||[]).filter(p=>{
+    if(p.status!=='rejected') return false;
+    if(p.action==='advanceRequest' || p.action==='advanceTransfer') return false;
+    if(!isAdmin && session && p.submittedBy!==session.name) return false;
+    let pl = {}; try{ pl = JSON.parse(p.payload||'{}'); }catch(e){}
+    if(whFilter!=='all' && pl.warehouseId && pl.warehouseId!==whFilter) return false;
+    const code = pl.code || pl.posmCode || (Array.isArray(pl.items)&&pl.items[0]&&pl.items[0].code);
+    if(code && !matchesBUFilter(code)) return false;
+    return true;
+  }).sort((a,b)=>String(b.reviewedAt||b.submittedAt).localeCompare(String(a.reviewedAt||a.submittedAt)));
+}
 function renderRejected(){
   const whFilter = currentFilterWarehouse();
+  const rejectedSubs = rejectedSubmissions();
   const rejectedRequests = DATA.requests.filter(r=>r.status==='rejected' && (whFilter==='all'||r.warehouseId===whFilter) && matchesBUFilter(r.posmCode));
   const rejectedTransfers = DATA.transfers.filter(t=>t.status==='rejected' && (whFilter==='all'||t.fromWarehouseId===whFilter||t.toWarehouseId===whFilter) && matchesBUFilter(t.posmCode));
   const isAdmin = USE_DB && session && session.role==='admin';
   const html = `
     ${isAdmin ? `<div class="notice"><div style="flex:1;">Seeing a request that was rejected but is still stuck in "For Sorting"? That can happen for items rejected before this page existed. Run a one-time repair to fix any leftover records.</div><button class="btn sm" id="btnRepairRejected" style="flex-shrink:0;">🔧 Repair Stuck Records</button></div>` : ''}
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="btn sm" id="btnExportRejected">⬇ Excel</button></div>
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head"><div><h3>Rejected Submissions</h3><div class="panel-sub">${rejectedSubs.length} Stock In / Stock Out / Scan / New POSM / other action(s) that Admin rejected — nothing was changed</div></div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Details</th><th>Submitted By</th><th>Submitted</th><th>Reject Reason</th><th>Rejected By</th></tr></thead>
+        <tbody>
+        ${rejectedSubs.map(p=>`<tr>
+            <td><span class="badge expired">${pendingActionTypeLabel(p.action)}</span></td>
+            <td class="cell-sub" style="max-width:420px;">${describePendingAction(p)}</td>
+            <td>${p.submittedBy||''}</td>
+            <td class="cell-sub">${p.submittedAt?fmtDateShort(p.submittedAt):''}</td>
+            <td class="cell-sub">${p.rejectReason||'—'}</td>
+            <td class="cell-sub">${p.reviewedBy||''}</td></tr>`).join('') || `<tr><td colspan="6" class="empty-state">No rejected submissions.</td></tr>`}
+        </tbody></table></div>
+    </div>
     <div class="panel" style="margin-bottom:16px;">
       <div class="panel-head"><div><h3>Rejected Requests</h3><div class="panel-sub">${rejectedRequests.length} request(s) — no longer active on the Sorting/Delivery board</div></div></div>
       <div class="table-wrap"><table>
@@ -2242,7 +2295,8 @@ function renderRejected(){
       return {'POSM Code':t.posmCode, Description:p?p.desc:'', From: whById(t.fromWarehouseId)?whById(t.fromWarehouseId).name:t.fromWarehouseId,
         To: whById(t.toWarehouseId)?whById(t.toWarehouseId).name:t.toWarehouseId, Qty:t.qty, 'Reject Reason': info&&info.reason?info.reason:'', 'Rejected By': info?info.reviewedBy:''};
     });
-    exportSheetsToExcel([{name:'Rejected Requests', rows:reqRows}, {name:'Rejected Transfers', rows:trfRows}], 'Rejected-'+todayStr()+'.xlsx');
+    const subRows = rejectedSubs.map(p=>({Type:pendingActionTypeLabel(p.action), Details:describePendingAction(p), 'Submitted By':p.submittedBy||'', 'Submitted At':p.submittedAt||'', 'Reject Reason':p.rejectReason||'', 'Rejected By':p.reviewedBy||'', 'Rejected At':p.reviewedAt||''}));
+    exportSheetsToExcel([{name:'Rejected Submissions', rows:subRows}, {name:'Rejected Requests', rows:reqRows}, {name:'Rejected Transfers', rows:trfRows}], 'Rejected-'+todayStr()+'.xlsx');
   });
   if(isAdmin){
     document.getElementById('btnRepairRejected').addEventListener('click', async ()=>{
@@ -3923,7 +3977,7 @@ function showUpdateBar(){
   document.body.appendChild(bar);
 }
 
-const APP_VERSION = '2026.09.24-v3';
+const APP_VERSION = '2026.09.24-v4';
 function updateVersionInfo(){
   const el = document.getElementById('appVersionInfo'); if(!el) return;
   el.textContent = `Version ${APP_VERSION} · ${isStandalone()?'installed app':'browser'} · ${window.innerWidth}px${(window.__appZoom||1)>1?' · zoom '+window.__appZoom:''}`;
