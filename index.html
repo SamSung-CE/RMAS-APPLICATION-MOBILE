@@ -459,9 +459,9 @@ body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))
       <button data-role="admin" style="flex:1;">Admin</button>
     </div>
     <div id="loginUserPane">
-      <div class="field"><label>Pangalan mo</label><input type="text" id="loginUserName" list="tsDatalist" placeholder="e.g. Juan Dela Cruz"></div>
+      <div class="field"><label>Your name</label><input type="text" id="loginUserName" list="tsDatalist" placeholder="e.g. Juan Dela Cruz"></div>
       <p class="login-note">All your actions (stock in/out, requests, etc.) will go to <b>Pending Approval</b> by Admin first.</p>
-      <button class="btn primary" id="loginUserBtn" style="width:100%;justify-content:center;">Simulan</button>
+      <button class="btn primary" id="loginUserBtn" style="width:100%;justify-content:center;">Continue</button>
     </div>
     <div id="loginAdminPane" style="display:none;">
       <div class="field"><label>Admin Password</label><input type="password" id="loginAdminPassword" placeholder="••••••••"></div>
@@ -470,7 +470,7 @@ body.mobile-app .scan-toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))
     </div>
     <div id="loginError" class="login-error" style="display:none;"></div>
     <div class="cell-sub" style="text-align:center;margin-top:14px;">App version 3</div>
-    <div class="install-banner" id="installBanner"><img src="icon-192.png" alt=""><div class="ib-text"><b>I-install ang app</b>Ilagay sa home screen para parang totoong app.</div><button id="installBannerBtn">Install</button></div>
+    <div class="install-banner" id="installBanner"><img src="icon-192.png" alt=""><div class="ib-text"><b>Install the app</b>Add it to your home screen so it works like a real app.</div><button id="installBannerBtn">Install</button></div>
   </div>
 </div>
 <div id="app" style="display:none;">
@@ -789,8 +789,8 @@ async function postAction(action, payload){
   const json = await res.json();
   if(!json.success){
     const msg = json.error || 'Unknown server error';
-    if(/Hindi maaaring isumite ang aksyon|Unknown POST action/i.test(msg)){
-      throw new Error('Luma pa ang Code.gs sa Google Apps Script kaya hindi pa nito kilala ang bagong feature ("'+((msg.split(':').pop()||'').trim())+'").\n\nAyusin: buksan ang Apps Script › palitan ng bagong Code.gs › Save › Deploy › Manage deployments › Edit (lapis) › Version: New version › Deploy. Pagkatapos, subukan ulit.');
+    if(/Hindi maaaring isumite ang aksyon|cannot be submitted|Unknown POST action/i.test(msg)){
+      throw new Error('The Code.gs in Google Apps Script is outdated, so it does not recognize this new feature ("'+((msg.split(':').pop()||'').trim())+'").\n\nTo fix: open Apps Script › replace it with the new Code.gs › Save › Deploy › Manage deployments › Edit (pencil) › Version: New version › Deploy. Then try again.');
     }
     throw new Error(msg);
   }
@@ -2734,9 +2734,9 @@ async function viewPendingDetail(id){
       <div class="field"><label>Summary</label><div class="cell-sub">${describePendingAction({action:res.action, payload:JSON.stringify(p)})}</div></div>
       ${p.geo ? `<div class="field"><label>Submitted from</label><div class="cell-sub">📍 ${fmtDist(Number(p.geo.dist)||0)} from the warehouse (GPS ±${p.geo.acc} m) · <a href="https://www.google.com/maps?q=${p.geo.lat},${p.geo.lng}" target="_blank" rel="noopener">view on map</a></div></div>` : ''}
       ${res.action==='stockBatch' && Array.isArray(p.items) ? `<div class="field"><label>Scanned POSM (${p.items.length})</label><div class="table-wrap" style="max-height:260px;overflow-y:auto;"><table><tbody>${p.items.map(i=>{ const pm = posmByCode(i.code); return `<tr><td><div class="cell-main">${i.code}</div><div class="cell-sub">${pm?pm.desc:''}</div></td><td class="qty-strong" style="text-align:right;">${payload_sign(p)}${i.qty}</td></tr>`; }).join('')}</tbody></table></div></div>` : ''}
-      <div class="field"><label>Isinumite ni</label><div class="cell-sub">${res.submittedBy} · ${fmtDate(res.submittedAt)}</div></div>
+      <div class="field"><label>Submitted by</label><div class="cell-sub">${res.submittedBy} · ${fmtDate(res.submittedAt)}</div></div>
       ${images.map(img=>`<div class="field"><label>${img.label}</label><img src="${img.src}" style="width:100%;border-radius:8px;border:1px solid var(--line);"></div>`).join('')}
-    `, `<button class="btn ghost" onclick="closeModal()">Isara</button>`);
+    `, `<button class="btn ghost" onclick="closeModal()">Close</button>`);
   }catch(e){ alert('Could not load the detail.'); }
 }
 
@@ -3869,7 +3869,7 @@ function initBackHandling(){
     }
     if(Date.now() - backExitArmed < 2200){ history.back(); return; }
     backExitArmed = Date.now();
-    const t = document.createElement('div'); t.className = 'back-toast'; t.textContent = 'Pindutin ulit ang Back para lumabas';
+    const t = document.createElement('div'); t.className = 'back-toast'; t.textContent = 'Press Back again to exit';
     document.body.appendChild(t); setTimeout(()=>t.remove(), 2000);
     reTrap();
   });
@@ -3972,12 +3972,12 @@ function showUpdateBar(){
   if(document.getElementById('updateBar')) return;
   const bar = document.createElement('div');
   bar.id = 'updateBar'; bar.className = 'update-bar';
-  bar.innerHTML = `<span>May bagong update ang app.</span><button>Update</button>`;
+  bar.innerHTML = `<span>A new version of the app is available.</span><button>Update</button>`;
   bar.querySelector('button').addEventListener('click', ()=>location.reload());
   document.body.appendChild(bar);
 }
 
-const APP_VERSION = '2026.09.24-v4';
+const APP_VERSION = '2026.09.25-v5';
 function updateVersionInfo(){
   const el = document.getElementById('appVersionInfo'); if(!el) return;
   el.textContent = `Version ${APP_VERSION} · ${isStandalone()?'installed app':'browser'} · ${window.innerWidth}px${(window.__appZoom||1)>1?' · zoom '+window.__appZoom:''}`;
